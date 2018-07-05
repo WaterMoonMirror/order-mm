@@ -2,6 +2,7 @@ package com.example.order.Controller;
 
 import com.example.order.client.ProductClient;
 import com.example.order.dataobject.ProductInfo;
+import com.example.order.dtd.CartDTD;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
@@ -32,6 +33,13 @@ public class ClientController {
         List<ProductInfo> productList = productClient.getProductList(Arrays.asList("164103465734242707"));
         log.info("response={}",productList);
         return "ok";
+    }
+
+    @GetMapping("/decreaseStock")
+    public String decreaseStock(){
+        String msg = productClient.decreaseStock(Arrays.asList(new CartDTD("164103465734242707", 3)));
+        return msg;
+
     }
 
 }

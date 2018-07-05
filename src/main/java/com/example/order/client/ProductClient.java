@@ -1,6 +1,7 @@
 package com.example.order.client;
 
 import com.example.order.dataobject.ProductInfo;
+import com.example.order.dtd.CartDTD;
 import org.hibernate.validator.constraints.EAN;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,9 @@ public interface ProductClient {
 
     @PostMapping("/product/listForOrder")
     List<ProductInfo> getProductList(@RequestBody List<String> productIdList);
+
+    @PostMapping("/product/decreaseStock")
+    String decreaseStock (List<CartDTD> cartDTDList);
 
 
 }
