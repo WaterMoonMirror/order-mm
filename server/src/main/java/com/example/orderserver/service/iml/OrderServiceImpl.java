@@ -2,16 +2,16 @@ package com.example.orderserver.service.iml;
 
 import com.example.orderserver.Repository.OrderDetailRepository;
 import com.example.orderserver.Repository.OrderMasterRepository;
-import com.example.orderserver.client.ProductClient;
 import com.example.orderserver.dataobject.OrderDetail;
 import com.example.orderserver.dataobject.OrderMaster;
-import com.example.orderserver.dataobject.ProductInfo;
-import com.example.orderserver.dtd.CartDTD;
 import com.example.orderserver.dtd.OrderDTO;
 import com.example.orderserver.enums.OrderStatusEnum;
 import com.example.orderserver.enums.PayStatusEnum;
 import com.example.orderserver.service.OrderService;
 import com.example.orderserver.utils.KeyUtil;
+import com.example.product.client.ProductClient;
+import com.example.product.common.DecreaseStockInput;
+import com.example.product.common.ProductInfoOutput;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,7 +42,7 @@ public class OrderServiceImpl implements OrderService {
 //          查询商品信息（调用商品服务）
         List<String> productIdList = orderDTO.getOrderDetailList().stream()
                 .map(OrderDetail::getProductId).collect(Collectors.toList());
-        List<ProductInfo> productList = productClient.getProductList(productIdList);
+        List<ProductInfoOutput> productList = productClient.listForOrder(productIdList);
 
 
 //          计算总价
@@ -50,7 +50,7 @@ public class OrderServiceImpl implements OrderService {
 
         for (OrderDetail orderDetail: orderDTO.getOrderDetailList()){
 
-            for (ProductInfo productInfo: productList){
+            for (ProductInfoOutput productInfo: productList){
                 if (productInfo.getProductId().equals(orderDetail.getProductId())){
                     orderAmount=productInfo.getProductPrice()
                             .multiply(new BigDecimal(orderDetail.getProductQuantity()))
@@ -58,6 +58,8 @@ public class OrderServiceImpl implements OrderService {
                     BeanUtils.copyProperties(productInfo,orderDetail);
                     orderDetail.setDetailId(KeyUtil.genUniqueKey());
                     orderDetail.setOrderId(orderId);
+                    orderDetail.setCreateTime(new Date());
+                    orderDetail.setUpdateTime(new Date());
                     orderDetailRepository.save(orderDetail);
                 }
             }
@@ -65,8 +67,8 @@ public class OrderServiceImpl implements OrderService {
 
 
 //         * 4. 扣库存（调用商品服务）
-        List<CartDTD> cartDTDList = orderDTO.getOrderDetailList().stream()
-                .map(e -> new CartDTD(e.getProductId(), e.getProductQuantity()))
+        List<DecreaseStockInput> cartDTDList = orderDTO.getOrderDetailList().stream()
+                .map(e -> new DecreaseStockInput(e.getProductId(), e.getProductQuantity()))
                 .collect(Collectors.toList());
         productClient.decreaseStock(cartDTDList);
 
